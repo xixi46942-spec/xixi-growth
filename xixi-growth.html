@@ -100,6 +100,31 @@
     white-space: nowrap;
   }
   .reward-desc { font-size: 13px; color: #8a7a6a; padding-left: 32px; }
+  .badges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-bottom: 40px; }
+  .badge-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 16px 8px;
+    text-align: center; position: relative;
+    transition: all 0.2s;
+  }
+  .badge-card.earned {
+    background: rgba(196,168,130,0.08);
+    border-color: rgba(196,168,130,0.25);
+    box-shadow: 0 0 12px rgba(196,168,130,0.1);
+  }
+  .badge-card.locked { opacity: 0.35; filter: grayscale(0.8); }
+  .badge-icon { font-size: 36px; margin-bottom: 8px; display: block; }
+  .badge-name { font-size: 12px; color: #c4a882; margin-bottom: 4px; }
+  .badge-card.locked .badge-name { color: #5a4a3a; }
+  .badge-hint { font-size: 10px; color: #5a4a3a; line-height: 1.4; }
+  .badge-earned-mark {
+    position: absolute; top: 8px; right: 8px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: linear-gradient(135deg, #c4a882, #e8c4a0);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #1a1025;
+  }
   .log-entry {
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.06);
@@ -154,6 +179,7 @@
 <div class="tabs">
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('tasks')">今日任务</button>
+    <button class="tab-btn" onclick="switchTab('badges')">徽章</button>
     <button class="tab-btn" onclick="switchTab('rewards')">成就奖励</button>
     <button class="tab-btn" onclick="switchTab('log')">行动记录</button>
   </div>
@@ -180,6 +206,24 @@ const TASKS = [
   { id: "read", label: "读了点书或有意思的文章", category: "成长", xp: { wisdom: 4, charm: 1 }, emoji: "📖" },
   { id: "outdoor", label: "出门晒太阳走走", category: "成长", xp: { vitality: 3, charm: 2 }, emoji: "🌿" },
   { id: "deep_talk", label: "和人进行了有深度的对话", category: "成长", xp: { wisdom: 3, charm: 2 }, emoji: "💬" },
+];
+
+const BADGES = [
+  { id: "lv3", name: "破茧", icon: "🦋", hint: "达到 Lv.3", check: () => getLevel() >= 3 },
+  { id: "lv5", name: "自在", icon: "🌊", hint: "达到 Lv.5", check: () => getLevel() >= 5 },
+  { id: "lv7", name: "清醒", icon: "⚡", hint: "达到 Lv.7", check: () => getLevel() >= 7 },
+  { id: "lv10", name: "溪流入川", icon: "✨", hint: "达到 Lv.10", check: () => getLevel() >= 10 },
+  { id: "charm20", name: "明媚", icon: "🌸", hint: "魅力达到 20", check: () => state.stats.charm >= 20 },
+  { id: "charm35", name: "倾城", icon: "🌺", hint: "魅力达到 35", check: () => state.stats.charm >= 35 },
+  { id: "conf_dog", name: "自信小狗", icon: "🐶", hint: "自信达到 20", check: () => state.stats.confidence >= 20 },
+  { id: "conf_wolf", name: "自信大狗", icon: "🐺", hint: "自信达到 35", check: () => state.stats.confidence >= 35 },
+  { id: "vit_baby", name: "健康宝宝", icon: "🌱", hint: "活力达到 20", check: () => state.stats.vitality >= 20 },
+  { id: "vit_bloom", name: "生机勃勃", icon: "🌳", hint: "活力达到 35", check: () => state.stats.vitality >= 35 },
+  { id: "wis_owl", name: "小夫子", icon: "🦉", hint: "智慧达到 25", check: () => state.stats.wisdom >= 25 },
+  { id: "wis_sage", name: "通透", icon: "🔮", hint: "智慧达到 40", check: () => state.stats.wisdom >= 40 },
+  { id: "fish_boss", name: "摸鱼大师", icon: "🐠", hint: "完成15次工作任务", check: () => state.log.filter(l => ['起身','下班','午饭','淡定'].some(k => l.text.includes(k))).length >= 15 },
+  { id: "night_owl", name: "改过自新", icon: "🌙", hint: "完成5次早睡任务", check: () => state.log.filter(l => l.text.includes('11点前')).length >= 5 },
+  { id: "pipi_fan", name: "铲屎官", icon: "🐱", hint: "累计完成20条记录", check: () => state.log.length >= 20 },
 ];
 
 const REWARDS = [
@@ -316,8 +360,26 @@ function switchTab(tab) {
 function renderTab() {
   const el = document.getElementById('tab-content');
   if (currentTab === 'tasks') el.innerHTML = renderTasks();
+  else if (currentTab === 'badges') el.innerHTML = renderBadges();
   else if (currentTab === 'rewards') el.innerHTML = renderRewards();
   else el.innerHTML = renderLog();
+}
+
+function renderBadges() {
+  const earned = BADGES.filter(b => b.check());
+  const locked = BADGES.filter(b => !b.check());
+  const all = [...earned, ...locked];
+  return `<div class="badges-grid">` + all.map(b => {
+    const isEarned = b.check();
+    return `
+      <div class="badge-card ${isEarned ? 'earned' : 'locked'}">
+        ${isEarned ? '<div class="badge-earned-mark">✓</div>' : ''}
+        <span class="badge-icon">${b.icon}</span>
+        <div class="badge-name">${b.name}</div>
+        <div class="badge-hint">${b.hint}</div>
+      </div>
+    `;
+  }).join('') + `</div>`;
 }
 
 function renderTasks() {
