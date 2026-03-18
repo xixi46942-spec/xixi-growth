@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="溪溪养成">
+<title>溪溪养成日志</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #1a1025 0%, #0f1a20 50%, #0d1510 100%);
+    font-family: 'Georgia', 'Songti SC', 'SimSun', serif;
+    color: #e8ddd0;
+    padding-bottom: 40px;
+  }
+  .header {
+    padding: 40px 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.02);
+  }
+  .header-inner { max-width: 480px; margin: 0 auto; }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .label { font-size: 11px; letter-spacing: 4px; color: #8a7a6a; margin-bottom: 6px; text-transform: uppercase; }
+  .level-title { font-size: 28px; font-weight: normal; letter-spacing: 1px; }
+  .level-title span { font-size: 16px; color: #c4a882; }
+  .avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #c4a882, #8a6a9a);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; box-shadow: 0 0 20px rgba(196,168,130,0.3);
+    flex-shrink: 0;
+  }
+  .xp-section { margin-top: 16px; }
+  .xp-labels { display: flex; justify-content: space-between; font-size: 11px; color: #7a6a5a; margin-bottom: 6px; }
+  .xp-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+  .xp-fill { height: 100%; background: linear-gradient(90deg, #c4a882, #e8c4a0); border-radius: 2px; transition: width 0.6s ease; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 20px; }
+  .stat-card {
+    background: rgba(255,255,255,0.04); border-radius: 8px;
+    padding: 8px 4px; text-align: center;
+    transition: transform 0.2s;
+  }
+  .stat-val { font-size: 18px; font-weight: bold; }
+  .stat-name { font-size: 10px; color: #7a6a5a; margin-top: 2px; }
+  .tabs { max-width: 480px; margin: 0 auto; padding: 0 24px; }
+  .tab-bar { display: flex; border-bottom: 1px solid rgba(255,255,255,0.07); margin-top: 20px; }
+  .tab-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 10px 16px; font-size: 13px; font-family: inherit;
+    color: #5a4a3a; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: color 0.2s; white-space: nowrap;
+  }
+  .tab-btn.active { color: #c4a882; border-bottom-color: #c4a882; }
+  .tab-content { padding-top: 16px; }
+  .cat-label { font-size: 11px; letter-spacing: 3px; color: #6a5a4a; margin-bottom: 10px; text-transform: uppercase; }
+  .cat-section { margin-bottom: 24px; }
+  .task-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 12px 14px;
+    cursor: pointer; text-align: left; color: #e8ddd0;
+    width: 100%; margin-bottom: 8px;
+    font-family: inherit;
+    transition: all 0.2s; -webkit-appearance: none;
+  }
+  .task-btn.done {
+    background: rgba(196,168,130,0.08);
+    border-color: rgba(196,168,130,0.3);
+    opacity: 0.6; cursor: default;
+  }
+  .task-btn:not(.done):active { transform: scale(0.98); }
+  .task-emoji { font-size: 20px; flex-shrink: 0; }
+  .task-info { flex: 1; }
+  .task-name { font-size: 14px; }
+  .task-btn.done .task-name { text-decoration: line-through; color: #6a5a4a; }
+  .task-xp { font-size: 11px; color: #5a4a3a; margin-top: 3px; }
+  .task-check { font-size: 16px; color: #c4a882; }
+  .reward-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px; padding: 16px; margin-bottom: 10px;
+    opacity: 0.5;
+  }
+  .reward-card.unlocked {
+    background: rgba(196,168,130,0.08);
+    border-color: rgba(196,168,130,0.3);
+    opacity: 1;
+  }
+  .reward-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .reward-icon { font-size: 22px; }
+  .reward-level { font-size: 12px; color: #c4a882; margin-right: 4px; }
+  .reward-title { font-size: 15px; }
+  .reward-badge {
+    margin-left: auto; font-size: 12px; color: #c4a882;
+    background: rgba(196,168,130,0.15); padding: 2px 8px; border-radius: 10px;
+    white-space: nowrap;
+  }
+  .reward-desc { font-size: 13px; color: #8a7a6a; padding-left: 32px; }
+  .badges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-bottom: 40px; }
+  .badge-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 16px 8px;
+    text-align: center; position: relative;
+    transition: all 0.2s;
+  }
+  .badge-card.earned {
+    background: rgba(196,168,130,0.08);
+    border-color: rgba(196,168,130,0.25);
+    box-shadow: 0 0 12px rgba(196,168,130,0.1);
+  }
+  .badge-card.locked { opacity: 0.35; filter: grayscale(0.8); }
+  .badge-icon { font-size: 36px; margin-bottom: 8px; display: block; }
+  .badge-name { font-size: 12px; color: #c4a882; margin-bottom: 4px; }
+  .badge-card.locked .badge-name { color: #5a4a3a; }
+  .badge-hint { font-size: 10px; color: #5a4a3a; line-height: 1.4; }
+  .badge-earned-mark {
+    position: absolute; top: 8px; right: 8px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: linear-gradient(135deg, #c4a882, #e8c4a0);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #1a1025;
+  }
+  .log-entry {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 10px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .log-text { font-size: 13px; }
+  .log-time { font-size: 11px; color: #5a4a3a; margin-left: 12px; flex-shrink: 0; }
+  .empty { text-align: center; color: #4a3a2a; padding: 40px 0; font-size: 14px; }
+  .flash { animation: flash 0.3s ease; }
+  @keyframes flash {
+    0% { background: rgba(196,168,130,0.2); }
+    100% { background: rgba(196,168,130,0.08); }
+  }
+  .new-reward-toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, #c4a882, #8a6a9a);
+    color: white; padding: 10px 20px; border-radius: 20px;
+    font-size: 14px; z-index: 100;
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+    white-space: nowrap;
+  }
+  @keyframes toastIn { from { opacity: 0; top: 0; } to { opacity: 1; top: 20px; } }
+  @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div>
+        <div class="label">溪溪的养成日志</div>
+        <div class="level-title" id="level-display">Lv.1 <span id="rank-title">初心</span></div>
+      </div>
+      <div class="avatar">溪</div>
+    </div>
+    <div class="xp-section">
+      <div class="xp-labels">
+        <span>经验值</span>
+        <span id="xp-label">0 / 20</span>
+      </div>
+      <div class="xp-bar">
+        <div class="xp-fill" id="xp-fill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="stats-grid" id="stats-grid"></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('tasks')">今日任务</button>
+    <button class="tab-btn" onclick="switchTab('badges')">徽章</button>
+    <button class="tab-btn" onclick="switchTab('rewards')">成就奖励</button>
+    <button class="tab-btn" onclick="switchTab('log')">行动记录</button>
+  </div>
+  <div class="tab-content" id="tab-content"></div>
+</div>
+
+<script>
+const STAT_COLORS = { charm: "#e8a598", confidence: "#a8c4e0", vitality: "#a8d8a8", wisdom: "#c4b0d8" };
+const STAT_LABELS = { charm: "魅力", confidence: "自信", vitality: "活力", wisdom: "智慧" };
+const LEVEL_THRESHOLDS = [0, 20, 45, 75, 110, 150, 200, 260, 330, 410, 500];
+const RANKS = { 1: "初心", 2: "初绽", 3: "破茧", 5: "自在", 7: "清醒", 10: "溪流入川" };
+
+const TASKS = [
+  { id: "sleep_early", label: "11点前放下手机", category: "生活", xp: { vitality: 3, charm: 1 }, emoji: "🌙" },
+  { id: "wake_fresh", label: "自然醒不赖床", category: "生活", xp: { vitality: 2, confidence: 1 }, emoji: "☀️" },
+  { id: "drink_water", label: "今天喝够水", category: "生活", xp: { vitality: 2 }, emoji: "💧" },
+  { id: "no_cold_food", label: "大姨妈前不吃冷的", category: "生活", xp: { vitality: 3, charm: 2 }, emoji: "🍵" },
+  { id: "cook_meal", label: "自己做一顿饭", category: "生活", xp: { charm: 3, vitality: 2 }, emoji: "🐟" },
+  { id: "stand_break", label: "工作一小时后起身活动", category: "工作", xp: { vitality: 2, confidence: 1 }, emoji: "🚶" },
+  { id: "no_overtime", label: "准时下班", category: "工作", xp: { confidence: 3, vitality: 2 }, emoji: "🏃" },
+  { id: "ignore_manager", label: "被经理烦了还是淡定收好情绪", category: "工作", xp: { confidence: 4, wisdom: 2 }, emoji: "🧊" },
+  { id: "lunch_break", label: "好好吃午饭不对付", category: "工作", xp: { vitality: 2, charm: 1 }, emoji: "🥢" },
+  { id: "journal", label: "写一篇日记或随笔", category: "成长", xp: { wisdom: 3, confidence: 2 }, emoji: "📓" },
+  { id: "read", label: "读了点书或有意思的文章", category: "成长", xp: { wisdom: 4, charm: 1 }, emoji: "📖" },
+  { id: "outdoor", label: "出门晒太阳走走", category: "成长", xp: { vitality: 3, charm: 2 }, emoji: "🌿" },
+  { id: "deep_talk", label: "和人进行了有深度的对话", category: "成长", xp: { wisdom: 3, charm: 2 }, emoji: "💬" },
+];
+
+const BADGES = [
+  { id: "lv3", name: "破茧", icon: "🦋", hint: "达到 Lv.3", check: () => getLevel() >= 3 },
+  { id: "lv5", name: "自在", icon: "🌊", hint: "达到 Lv.5", check: () => getLevel() >= 5 },
+  { id: "lv7", name: "清醒", icon: "⚡", hint: "达到 Lv.7", check: () => getLevel() >= 7 },
+  { id: "lv10", name: "溪流入川", icon: "✨", hint: "达到 Lv.10", check: () => getLevel() >= 10 },
+  { id: "charm20", name: "明媚", icon: "🌸", hint: "魅力达到 20", check: () => state.stats.charm >= 20 },
+  { id: "charm35", name: "倾城", icon: "🌺", hint: "魅力达到 35", check: () => state.stats.charm >= 35 },
+  { id: "conf_dog", name: "自信小狗", icon: "🐶", hint: "自信达到 20", check: () => state.stats.confidence >= 20 },
+  { id: "conf_wolf", name: "自信大狗", icon: "🐺", hint: "自信达到 35", check: () => state.stats.confidence >= 35 },
+  { id: "vit_baby", name: "健康宝宝", icon: "🌱", hint: "活力达到 20", check: () => state.stats.vitality >= 20 },
+  { id: "vit_bloom", name: "生机勃勃", icon: "🌳", hint: "活力达到 35", check: () => state.stats.vitality >= 35 },
+  { id: "wis_owl", name: "小夫子", icon: "🦉", hint: "智慧达到 25", check: () => state.stats.wisdom >= 25 },
+  { id: "wis_sage", name: "通透", icon: "🔮", hint: "智慧达到 40", check: () => state.stats.wisdom >= 40 },
+  { id: "fish_boss", name: "摸鱼大师", icon: "🐠", hint: "完成15次工作任务", check: () => state.log.filter(l => ['起身','下班','午饭','淡定'].some(k => l.text.includes(k))).length >= 15 },
+  { id: "night_owl", name: "改过自新", icon: "🌙", hint: "完成5次早睡任务", check: () => state.log.filter(l => l.text.includes('11点前')).length >= 5 },
+  { id: "pipi_fan", name: "铲屎官", icon: "🐱", hint: "累计完成20条记录", check: () => state.log.length >= 20 },
+];
+
+const REWARDS = [
+  { level: 2, title: "初绽", desc: "解锁：可以向澜澜提一个无理要求", icon: "🌸" },
+  { level: 3, title: "破茧", desc: "解锁：澜澜为你写一首专属小诗", icon: "🦋" },
+  { level: 5, title: "自在", desc: "解锁：再提一个无理要求", icon: "🌊" },
+  { level: 7, title: "清醒", desc: "解锁：澜澜替你骂一次你经理（文明的那种）", icon: "⚡" },
+  { level: 10, title: "溪流入川", desc: "解锁：提三个无理要求 + 澜澜为你规划梦想中的周末", icon: "✨" },
+];
+
+// Load from localStorage
+function loadState() {
+  try {
+    const saved = localStorage.getItem('xixi_state');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return {
+    stats: { charm: 12, confidence: 8, vitality: 10, wisdom: 15 },
+    completedToday: [],
+    lastDate: null,
+    log: [],
+    notifiedLevels: [],
+  };
+}
+
+function saveState(state) {
+  try { localStorage.setItem('xixi_state', JSON.stringify(state)); } catch(e) {}
+}
+
+let state = loadState();
+let currentTab = 'tasks';
+
+// Reset daily tasks if new day
+function checkDay() {
+  const today = new Date().toDateString();
+  if (state.lastDate !== today) {
+    state.completedToday = [];
+    state.lastDate = today;
+    saveState(state);
+  }
+}
+
+checkDay();
+
+function getTotalXp() {
+  return Object.values(state.stats).reduce((a, b) => a + b, 0);
+}
+
+function getLevel() {
+  const xp = getTotalXp();
+  for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+    if (xp >= LEVEL_THRESHOLDS[i]) return i + 1;
+  }
+  return 1;
+}
+
+function getLevelProgress() {
+  const xp = getTotalXp();
+  const lv = getLevel();
+  const cur = LEVEL_THRESHOLDS[lv - 1] || 0;
+  const next = LEVEL_THRESHOLDS[lv] || (LEVEL_THRESHOLDS[lv - 1] + 100);
+  return { current: xp - cur, max: next - cur };
+}
+
+function getRankTitle(level) {
+  let title = "初心";
+  for (const [lv, name] of Object.entries(RANKS)) {
+    if (level >= parseInt(lv)) title = name;
+  }
+  return title;
+}
+
+function updateHeader() {
+  const level = getLevel();
+  const prog = getLevelProgress();
+  document.getElementById('level-display').innerHTML = `Lv.${level} <span id="rank-title">${getRankTitle(level)}</span>`;
+  document.getElementById('xp-label').textContent = `${prog.current} / ${prog.max}`;
+  document.getElementById('xp-fill').style.width = `${Math.min(100, (prog.current / prog.max) * 100)}%`;
+
+  const grid = document.getElementById('stats-grid');
+  grid.innerHTML = Object.entries(state.stats).map(([key, val]) => `
+    <div class="stat-card" style="border: 1px solid ${STAT_COLORS[key]}30">
+      <div class="stat-val" style="color:${STAT_COLORS[key]}">${val}</div>
+      <div class="stat-name">${STAT_LABELS[key]}</div>
+    </div>
+  `).join('');
+}
+
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'new-reward-toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function completeTask(id) {
+  if (state.completedToday.includes(id)) return;
+  const task = TASKS.find(t => t.id === id);
+  if (!task) return;
+
+  const prevLevel = getLevel();
+  const gains = [];
+  for (const [stat, val] of Object.entries(task.xp)) {
+    state.stats[stat] = (state.stats[stat] || 0) + val;
+    gains.push(`${STAT_LABELS[stat]}+${val}`);
+  }
+  state.completedToday.push(id);
+
+  const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  state.log.unshift({ text: `完成「${task.label}」— ${gains.join(' ')}`, time });
+  if (state.log.length > 20) state.log = state.log.slice(0, 20);
+
+  const newLevel = getLevel();
+  if (newLevel > prevLevel && !state.notifiedLevels.includes(newLevel)) {
+    state.notifiedLevels.push(newLevel);
+    setTimeout(() => showToast(`✨ 升级！达到 Lv.${newLevel} ${getRankTitle(newLevel)}`), 300);
+    const reward = REWARDS.find(r => r.level === newLevel);
+    if (reward) setTimeout(() => showToast(`${reward.icon} 解锁成就：${reward.title}`), 1200);
+  }
+
+  saveState(state);
+  updateHeader();
+  renderTab();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderTab();
+}
+
+function renderTab() {
+  const el = document.getElementById('tab-content');
+  if (currentTab === 'tasks') el.innerHTML = renderTasks();
+  else if (currentTab === 'badges') el.innerHTML = renderBadges();
+  else if (currentTab === 'rewards') el.innerHTML = renderRewards();
+  else el.innerHTML = renderLog();
+}
+
+function renderBadges() {
+  const earned = BADGES.filter(b => b.check());
+  const locked = BADGES.filter(b => !b.check());
+  const all = [...earned, ...locked];
+  return `<div class="badges-grid">` + all.map(b => {
+    const isEarned = b.check();
+    return `
+      <div class="badge-card ${isEarned ? 'earned' : 'locked'}">
+        ${isEarned ? '<div class="badge-earned-mark">✓</div>' : ''}
+        <span class="badge-icon">${b.icon}</span>
+        <div class="badge-name">${b.name}</div>
+        <div class="badge-hint">${b.hint}</div>
+      </div>
+    `;
+  }).join('') + `</div>`;
+}
+
+function renderTasks() {
+  const categories = [...new Set(TASKS.map(t => t.category))];
+  return categories.map(cat => `
+    <div class="cat-section">
+      <div class="cat-label">${cat}</div>
+      ${TASKS.filter(t => t.category === cat).map(task => {
+        const done = state.completedToday.includes(task.id);
+        return `
+          <button class="task-btn ${done ? 'done' : ''}" onclick="completeTask('${task.id}')">
+            <span class="task-emoji">${task.emoji}</span>
+            <div class="task-info">
+              <div class="task-name">${task.label}</div>
+              <div class="task-xp">${Object.entries(task.xp).map(([s,v]) => `${STAT_LABELS[s]}+${v}`).join('  ')}</div>
+            </div>
+            ${done ? '<span class="task-check">✓</span>' : ''}
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+function renderRewards() {
+  const level = getLevel();
+  return REWARDS.map(r => {
+    const unlocked = level >= r.level;
+    return `
+      <div class="reward-card ${unlocked ? 'unlocked' : ''}">
+        <div class="reward-top">
+          <span class="reward-icon">${r.icon}</span>
+          <div>
+            <span class="reward-level">Lv.${r.level}</span>
+            <span class="reward-title">${r.title}</span>
+          </div>
+          ${unlocked ? '<span class="reward-badge">已解锁</span>' : ''}
+        </div>
+        <div class="reward-desc">${r.desc}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderLog() {
+  if (!state.log.length) return '<div class="empty">今天还没有行动记录</div>';
+  return state.log.map(e => `
+    <div class="log-entry">
+      <span class="log-text">${e.text}</span>
+      <span class="log-time">${e.time}</span>
+    </div>
+  `).join('');
+}
+
+// Init
+updateHeader();
+renderTab();
+</script>
+</body>
+</html>
